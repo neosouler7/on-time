@@ -170,11 +170,30 @@ class Main:
         print("----- DATA GATHERING END -----\n")
         
         print("----- STATISTICS START -----\n")
-        for ref_no, retail in retail_info.items():
-            # ranking
-            print(ref_no)
-            print("")
-            print(retail_info[ref_no])
+        from operator import itemgetter
+
+        # NJ ranking
+
+        for period in ["3M", "6M", "12M"]:
+            nj_data = {model: {"product_id": product_info["model"], "sales_value": product_info["ranking"][f"L{period}_sales_sum"]} for _, product_info in retail_info.items() if product_info["entry"] == "NJ"}
+            sorted_nj_data = sorted(nj_data.values(), key=itemgetter("sales_value"), reverse=True)[:10]
+
+            nj_ranking = {}
+            for i, nj_info in enumerate(sorted_nj_data, start=1):
+                nj_product_id = nj_info["product_id"]
+                nj_ranking[f"NJ{i}"] = {"rank": i, "sales_value": nj_info["sales_value"], "product_id": nj_product_id}
+
+            print(nj_ranking)
+
+
+            # NJ 엔트리의 순위를 기존 데이터에 적용
+            for nj_rank, nj_info in nj_ranking.items():
+                nj_product_id = nj_info["product_id"]
+                nj_model = retail_info[nj_product_id]["model"]
+
+                print(nj_rank, nj_product_id, nj_model)
+                # retail_info[nj_product_id]["ranking"]["L6M_label"] = f"{nj_model}_{nj_rank}"
+
 
         
         print("----- STATISTICS END -----\n")
