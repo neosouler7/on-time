@@ -6,7 +6,6 @@ import openpyxl
 from common import STORE_MAP, PASS, SUCCESS, JINNY_THINK, JOY_CONFIRM, NO_6M_SALES
 from common import get_current_time, get_column_number, get_last_data_idx, convert_to_zero
 
-
 SOURCE_DIR = "C:/Users/jinny.hur/Desktop/업무파일/01. 리얼로케이션" # 마스터 파일 저장 경로
 SOURCE_FILE_NAME = "Retail BTQ reallocation (0207_rank)_JH" # 마스터 파일명(확장자 제외)
 
@@ -38,7 +37,7 @@ def get_retail_info_template(store_info_list):
         "L3M_sales_sum": 0
     }
 
-    return {"shortage_store_count": 0, "store_info": store_info, "ranking": ranking}
+    return {"model": "", "entry": "", "function": "", "shortage_store_count": 0, "store_info": store_info, "ranking": ranking}
 
 def get_product_detail(ref_no):
     if len(ref_no) >= 8 and ref_no[3] == "4":
@@ -54,6 +53,8 @@ def get_product_detail(ref_no):
         entry = "BIJOUX"
     elif len(ref_no) >= 3 and ref_no[2] == "N":
         entry = "NJ"
+    else:
+        entry = "X"
 
     if len(ref_no) >= 4 and ref_no[3] == "4":
         function = "RING"
@@ -71,6 +72,14 @@ def get_product_detail(ref_no):
         function = "X"
 
     return model, entry, function
+
+def get_sales_sum(store_info):
+    L12M_sales_sum, L6M_sales_sum, L3M_sales_sum = 0.0, 0.0, 0.0
+    for store_id, info in store_info.items():
+        L12M_sales_sum += info["L12M_sales"]
+        L6M_sales_sum += info["L6M_sales"]
+        L3M_sales_sum += info["L3M_sales"]
+    return L12M_sales_sum, L6M_sales_sum, L3M_sales_sum
 
 
 class Main:
@@ -94,14 +103,32 @@ class Main:
             # data_set
             {
                 "CRN7413800": {
+                    "model": a,
+                    "entry": a,
+                    "function": a,
                     "shortage_store_count": a,
+                    "store_info": {
+                        "6400: {
+                            "L12M_sales": a,
+                            "L6M_sales": a,
+                            "L3M sales": b,
+                            "MS": c,
+                            "stock": d,
+                            "in_transit": e,
+                            "wish_list": f,
+                            "reallocation": g,
+                            "coverage": h,
+                            "rotation": i,
+                        },
+                        ...
+                    }
                     "ranking: {
-                        "L12M_sales": a,
                         "L12M_label": b,
-                        "L6M_sales": a,
+                        "L12M_sales_sum": a,
                         "L6M_label": b,
-                        "L3M_sales": a,
+                        "L6M_sales_sum": a,
                         "L3M_label": b,
+                        "L3M_sales_sum": a,
                     }
                 },
                 ...
@@ -119,8 +146,8 @@ class Main:
             temp = get_retail_info_template(list(row)[get_column_number("AK"):get_column_number("EP") + 1]) # store_info
             retail_info[row[1]] = temp
 
-        # reallocation for store_info
-        print("----- FOLLOWUP START -----\n")
+        # retail_info에 필요한 정보 저장
+        print("----- DATA GATHERING START -----\n")
         for ref_no, retail in retail_info.items():
             # 품번 기준, rotation 값이 0인 store 개수를 저장한다.
             shortage_store_count = 0
@@ -129,10 +156,29 @@ class Main:
                     shortage_store_count += 1
             retail["shortage_store_count"] = shortage_store_count
 
-
-            # ranking
             model, entry, function = get_product_detail(ref_no)
-            print(model, entry, function)
+            L12M_sales_sum, L6M_sales_sum, L3M_sales_sum = get_sales_sum(retail.get("store_info"))
+
+            retail_info[ref_no]["model"] = model
+            retail_info[ref_no]["entry"] = entry
+            retail_info[ref_no]["function"] = function
+            retail_info[ref_no]["ranking"]["L12M_sales_sum"] = L12M_sales_sum
+            retail_info[ref_no]["ranking"]["L6M_sales_sum"] = L6M_sales_sum
+            retail_info[ref_no]["ranking"]["L3M_sales_sum"] = L3M_sales_sum
+            
+
+        print("----- DATA GATHERING END -----\n")
+        
+        print("----- STATISTICS START -----\n")
+        for ref_no, retail in retail_info.items():
+            # ranking
+            print(ref_no)
+            print("")
+            print(retail_info[ref_no])
+
+        
+        print("----- STATISTICS END -----\n")
+
 
 
 
