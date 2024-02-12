@@ -6,8 +6,9 @@ import openpyxl
 from common import STORE_MAP, PASS, SUCCESS, JINNY_THINK, JOY_CONFIRM, NO_6M_SALES
 from common import get_current_time, get_column_number, get_last_data_idx, convert_to_zero
 
-SOURCE_DIR = "/Users/jh/pythonProjects/on-time" # 마스터 파일 저장 경로
-SOURCE_FILE_NAME = "followup" # 마스터 파일명(확장자 제외)
+
+SOURCE_DIR = "C:/Users/jinny.hur/Desktop/업무파일/01. 리얼로케이션" # 마스터 파일 저장 경로
+SOURCE_FILE_NAME = "Retail BTQ reallocation (0207_rank)_JH" # 마스터 파일명(확장자 제외)
 
 
 def get_retail_info_template(store_info_list):
