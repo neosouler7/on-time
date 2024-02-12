@@ -1,53 +1,17 @@
-from datetime import datetime, timedelta
+
 from collections import Counter, OrderedDict
 
-import time
 import openpyxl
+
+from common import STORE_MAP, PASS, SUCCESS, JINNY_THINK, JOY_CONFIRM, NO_6M_SALES
+from common import get_current_time, get_column_number, get_last_data_idx, convert_to_zero
 
 
 SOURCE_DIR = "C:/Users/jinny.hur/Desktop/업무파일/01. 리얼로케이션" # 마스터 파일 저장 경로
-SOURCE_FILE_NAME = "Retail BTQ reallocation (master)_JH" # 마스터 파일명(확장자 제외)
+SOURCE_FILE_NAME = "Retail BTQ reallocation (0207_rank)_JH" # 마스터 파일명(확장자 제외)
 
 TARGET_ROTATION = 1.5
 
-STORE_MAP = {
-    "6400": "Hyundai AKJD", # AK ~ AS
-    "6401": "Galleria", # AT ~ BB
-    "6402": "Hyundai COEX", # BC ~ BK
-    "6403": "Lotte Avenuel", # BL ~ BT
-    "6404": "SSG Kangnam", # BU ~ CC
-    "6405": "SSG Time square", # CD ~ CL
-    "6407": "SSG Centum", # CM ~ CU
-    "6408": "Maison Cheongdam", # CV ~ DD
-    "6409": "Lotte Avenuel WT", # DE ~ DM
-    "6410": "SSG Daegu", # DN ~ DV
-    "6411": "Hyundai Pangyo" # DW ~ EE
-}
-
-PASS, SUCCESS, JINNY_THINK, JOY_CONFIRM, NO_6M_SALES = "pass", "success", "jinny_think", "joy_confirm", "no_6M_sales"
-
-def get_current_time(date_format=None, day_delta=None):
-    today = datetime.utcnow() + timedelta(hours=9)
-    today += timedelta(days=day_delta) if day_delta is not None else timedelta()
-
-    return today if date_format is None else today.strftime(date_format)
-
-def get_column_number(column_id):
-    return sum((ord(char) - ord('A') + 1) * 26 ** i for i, char in enumerate(reversed(column_id.upper()))) - 1
-
-def get_last_data_idx(ws):
-    start_row = end_row = 8
-    for row in ws.iter_rows(min_row=start_row, values_only=True):
-        end_row += 1 if row[1] is not None else 0
-        if row[1] is None:
-            break
-    return end_row - 1
-
-def convert_to_zero(value):
-    try:
-        return float(value) if value not in (None, '-') else 0.0
-    except ValueError:
-        return 0.0
 
 def get_retail_info_template(stock_info_list, store_info_list):
     store_keys_list = list(STORE_MAP.keys())
@@ -69,15 +33,16 @@ def get_retail_info_template(stock_info_list, store_info_list):
 
     store_info = {
         store_keys_list[i]: {
-            "L6M_sales": convert_to_zero(store_info_list[i * 9]),
-            "L3M_sales": convert_to_zero(store_info_list[i * 9 + 1]),
-            "MS": convert_to_zero(store_info_list[i * 9 + 2]),
-            "stock": convert_to_zero(store_info_list[i * 9 + 3]),
-            "in_transit": convert_to_zero(store_info_list[i * 9 + 4]),
-            "wish_list": convert_to_zero(store_info_list[i * 9 + 5]),
-            "reallocation": convert_to_zero(store_info_list[i * 9 + 6]),
-            "coverage": convert_to_zero(store_info_list[i * 9 + 7]),
-            "rotation": store_info_list[i * 9 + 8], # rotation의 경우 수식값으로 None과 0.0 이 명확하게 구분되는 바 filter 적용하지 않음
+            "L12M_sales": convert_to_zero(store_info_list[i * 10]),
+            "L6M_sales": convert_to_zero(store_info_list[i * 10 + 1]),
+            "L3M_sales": convert_to_zero(store_info_list[i * 10 + 2]),
+            "MS": convert_to_zero(store_info_list[i * 10 + 3]),
+            "stock": convert_to_zero(store_info_list[i * 10 + 4]),
+            "in_transit": convert_to_zero(store_info_list[i * 10 + 5]),
+            "wish_list": convert_to_zero(store_info_list[i * 10 + 6]),
+            "reallocation": convert_to_zero(store_info_list[i * 10 + 7]),
+            "coverage": convert_to_zero(store_info_list[i * 10 + 8]),
+            "rotation": store_info_list[i * 10 + 9], # rotation의 경우 수식값으로 None과 0.0 이 명확하게 구분되는 바 filter 적용하지 않음
         } for i in range(len(store_keys_list))
     }
 
@@ -101,22 +66,20 @@ class Main:
 
                 b. stock_info('24.2.11)
                     1. TTL Available 값에 대하여 KRD4/1001, Shipment 1, Shipment 2, Shipment 3 순으로 배분
-                    2. 단, success로 판정된 품번에 한하여 stock_info 조정(pass, jinny_think은 수행하지 않음)
+                    2. 단, success로 판정되지 않았으면 stock_info를 조정하지 않음 (결국 store_info부터 stock_info까지 JINNY_THINK 필요)
+                    3. 또한, KRD4_1001 재고 사용 필요 시, JOY_CONFIRM 로 분류
 
             3. 엑셀 반환
-                a. ref_no 별 reallocation result - pass, success, jinny_think
-                b. updated rdc value - 17~18, 21~26
-                c. updated store_info - only reallocation value of each store
 
             # data_set
             {
                 "CRN7413800": {
-                    "result": PASS / SUCCESS / JINNY_THINK
+                    "result": PASS / SUCCESS / JINNY_THINK / JOY_CONFIRM
                     "stock_info": {
                         "total_available": a
                         "tobe_moved": b,
                         "warehouse": {
-                            "KRD4/1001": b
+                            "KRD4/1001": c
                         },
                         "shipping": {
                             "shipment1": d,
@@ -126,6 +89,7 @@ class Main:
                     },
                     "store_info": {
                         "6400: {
+                            "L12M_sales": a,
                             "L6M_sales": a,
                             "L3M sales": b,
                             "MS": c,
@@ -152,12 +116,14 @@ class Main:
         retail_info = dict()
         for row in ws.iter_rows(min_row=8, max_row=get_last_data_idx(ws), values_only=True):
             temp = get_retail_info_template(list(row)[get_column_number("N"):get_column_number("AA") + 1] # stock_info
-                                          , list(row)[get_column_number("AK"):get_column_number("EE") + 1]) # store_info
+                                          , list(row)[get_column_number("AK"):get_column_number("EP") + 1]) # store_info
             retail_info[row[1]] = temp
 
         # reallocation for store_info
         print("----- STORE_INFO REALLOCATION -----\n")
         for ref_no, retail in retail_info.items():
+            # reallocation과 무관하지만, 업무 필요 사항으로 ranking 추가함
+
             total_available = retail.get("stock_info").get("total_available")
             current_available = total_available # reallocation 위해 재고값 복사
 
@@ -177,7 +143,6 @@ class Main:
                 if all(item[1].get("rotation") > TARGET_ROTATION for item in retail["store_info"].items() if item[1].get("rotation") is not None):
                     print(f'### {SUCCESS}\n- all store rotation over {TARGET_ROTATION} or all rotation None\n')
                     retail_info[ref_no]["result"] = SUCCESS
-                    # time.sleep(0.5)
                     break
 
                 # L6M_sales 값이 존재하는 store 정보만 가져온다. (엑셀에서도 없을 시 제외하고 있음)
@@ -185,7 +150,6 @@ class Main:
                 if len(store_info_items) == 0: # 전 지점에서 6개월 판매값이 없을 시
                     print(f'### {NO_6M_SALES}\n- no L6M_sales in all stores\n')
                     retail_info[ref_no]["result"] = NO_6M_SALES
-                    # time.sleep(0.5)
                     break
 
                 sorted_dict = OrderedDict(sorted(store_info_items, key=lambda x: x[1].get("rotation", 0) if isinstance(x[1], dict) else 0))
@@ -196,7 +160,6 @@ class Main:
                 if lowest_rotation_count > current_available: # 현 재고에 대하여 더 이상 지점별로 동등하게 배분 못할 시
                     print(f'### {JINNY_THINK}\n- {rotation_counts} > {current_available}\n')
                     retail_info[ref_no]["result"] = JINNY_THINK
-                    # time.sleep(0.5)
                     break
 
                 sorted_list = sorted(store_info_items, key=lambda x: x[1].get("rotation", 0))
@@ -220,7 +183,7 @@ class Main:
                 print("")
                 # time.sleep(3)
 
-        # reallocation for stock_info
+        # statistics & reallocation for stock_info
         print("----- STOCK_INFO REALLOCATION -----\n")
         for ref_no, retail in retail_info.items():
             if retail.get("result") not in [SUCCESS]: # SUCCESS 아니면, 재고정보 변경하지 않는다 
@@ -300,7 +263,7 @@ class Main:
                           , store_info.get("6409").get("reallocation", 0), store_info.get("6410").get("reallocation", 0)
                           , store_info.get("6411").get("reallocation", 0)])
             
-        new_wb.save(filename=f'{SOURCE_DIR}/{SOURCE_FILE_NAME}_{get_current_time("%Y%m%d_%H%M%S")}.xlsx')
+        new_wb.save(filename=f'{SOURCE_DIR}/{SOURCE_FILE_NAME}_reallocation_{get_current_time("%Y%m%d_%H%M%S")}.xlsx')
         print(f"\nExcel successfully created!")
         
         total_items = len(retail_info.items())
