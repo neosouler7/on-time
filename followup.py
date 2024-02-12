@@ -11,7 +11,9 @@ SOURCE_DIR = "C:/Users/jinny.hur/Desktop/업무파일/01. 리얼로케이션" # 
 SOURCE_FILE_NAME = "Retail BTQ reallocation (0207_rank)_JH" # 마스터 파일명(확장자 제외)
 
 
-def get_retail_info_template(store_info):
+def get_retail_info_template(store_info_list):
+    store_keys_list = list(STORE_MAP.keys())
+
     store_info = {
         store_keys_list[i]: {
             "L12M_sales": convert_to_zero(store_info_list[i * 10]),
@@ -36,7 +38,39 @@ def get_retail_info_template(store_info):
         "L3M_sales_sum": 0
     }
 
-    return {"shortage_store_count": 0, "stock_info": stock_info, "ranking": ranking}
+    return {"shortage_store_count": 0, "store_info": store_info, "ranking": ranking}
+
+def get_product_detail(ref_no):
+    if len(ref_no) >= 8 and ref_no[3] == "4":
+        model = ref_no[:8] + "00"
+    elif len(ref_no) >= 8 and ref_no[3] == "6":
+        model = ref_no[:8] + "00"
+    else:
+        model = ref_no
+
+    if len(ref_no) >= 3 and ref_no[2] == "8":
+        entry = "BIJOUX"
+    elif len(ref_no) >= 3 and ref_no[2] == "B":
+        entry = "BIJOUX"
+    elif len(ref_no) >= 3 and ref_no[2] == "N":
+        entry = "NJ"
+
+    if len(ref_no) >= 4 and ref_no[3] == "4":
+        function = "RING"
+    elif len(ref_no) >= 4 and ref_no[3] == "6":
+        function = "BRAC"
+    elif len(ref_no) >= 4 and ref_no[3] == "7":
+        function = "NECK"
+    elif len(ref_no) >= 4 and ref_no[3] == "8":
+        function = "EAR"
+    elif len(ref_no) >= 3 and ref_no[2] == "8":
+        function = "EAR"
+    elif len(ref_no) >= 4 and ref_no[3] == "3":
+        function = "NECK"
+    else:
+        function = "X"
+
+    return model, entry, function
 
 
 class Main:
@@ -97,23 +131,8 @@ class Main:
 
 
             # ranking
-            # =IF(MID(A2,4,1)="4",LEFT(A2,8)&"00",IF(MID(A2,4,1)="6",LEFT(A2,8)&"00",A2))
-            # =IF(MID(A2,3,1)="8","BIJOUX",IF(MID(A2,3,1)="B","BIJOUX",IF(MID(A2,3,1)="N","NJ")))
-            # =IF(MID(A2,4,1)="4","RING",IF(MID(A2,4,1)="6","BRAC",IF(MID(A2,4,1)="7","NECK",IF(MID(A2,4,1)="8","EAR",IF(MID(A2,3,1)="8","EAR",IF(MID(A2,4,1)="3","NECK","X"))))))
-            def get_product_detail(ref_no):
-                if ref_no[4:1] == "4":
-                    model = ref_no[8:] + "00"
-                elif ref_no[4:1] == "6":
-                    model = ref_no[8:] + "00"
-                else:
-                    model = ref_no
-
-
-
-                return model, entry, function
-
-
             model, entry, function = get_product_detail(ref_no)
+            print(model, entry, function)
 
 
 
