@@ -144,8 +144,9 @@ class Main:
         """
 
         # 마스터 파일의 "Allocation" 시트를 참조하여, 위 형태의 data-set을 구성
-        print("Reading xlsx ...")
-        wb = openpyxl.load_workbook(filename=f'{SOURCE_DIR}/{SOURCE_FILE_NAME}.xlsx', data_only=True)
+        file_name = f'{SOURCE_DIR}/{SOURCE_FILE_NAME}.xlsx'
+        print(f"Reading {file_name} ...")
+        wb = openpyxl.load_workbook(filename=file_name, data_only=True)
         ws = wb["Allocation"]
 
         retail_info = dict()
