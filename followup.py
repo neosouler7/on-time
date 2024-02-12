@@ -7,7 +7,7 @@ from common import STORE_MAP, PASS, SUCCESS, JINNY_THINK, JOY_CONFIRM, NO_6M_SAL
 from common import get_current_time, get_column_number, get_last_data_idx, convert_to_zero
 
 SOURCE_DIR = "C:/Users/jinny.hur/Desktop/업무파일/01. 리얼로케이션" # 마스터 파일 저장 경로
-SOURCE_FILE_NAME = "Retail BTQ reallocation (0207_rank)_JH" # 마스터 파일명(확장자 제외)
+SOURCE_FILE_NAME = "Retail BTQ reallocation (0207_rank)_JH2" # 마스터 파일명(확장자 제외)
 
 
 def get_retail_info_template(store_info_list):
@@ -157,6 +157,7 @@ class Main:
             retail["shortage_store_count"] = shortage_store_count
 
             model, entry, function = get_product_detail(ref_no)
+
             L12M_sales_sum, L6M_sales_sum, L3M_sales_sum = get_sales_sum(retail.get("store_info"))
 
             retail_info[ref_no]["model"] = model
@@ -174,21 +175,32 @@ class Main:
 
         # NJ ranking
 
-        for period in ["3M", "6M", "12M"]:
-            nj_data = {model: {"product_id": product_info["model"], "sales_value": product_info["ranking"][f"L{period}_sales_sum"]} for _, product_info in retail_info.items() if product_info["entry"] == "NJ"}
+        # for a, b in retail_info.items():
+        #     print(a, b)
+
+        for period in ["12M"]:
+            nj_data = {model: {"model": product_info["model"], "sales_value": product_info["ranking"][f"L{period}_sales_sum"]} for _, product_info in retail_info.items() if product_info["entry"] == "NJ"}
+            # print(nj_data)
             sorted_nj_data = sorted(nj_data.values(), key=itemgetter("sales_value"), reverse=True)[:10]
+            print("sorted_nj_data")
+            print(sorted_nj_data)
+            print("")
 
             nj_ranking = {}
             for i, nj_info in enumerate(sorted_nj_data, start=1):
-                nj_product_id = nj_info["product_id"]
-                nj_ranking[f"NJ{i}"] = {"rank": i, "sales_value": nj_info["sales_value"], "product_id": nj_product_id}
+                print(i, nj_info)
+                nj_model = nj_info["model"]
+                nj_ranking[f"NJ{i}"] = {"rank": i, "sales_value": nj_info["sales_value"], "model": nj_model}
 
+            print("nj_ranking")
             print(nj_ranking)
+            print("")
 
 
             # NJ 엔트리의 순위를 기존 데이터에 적용
             for nj_rank, nj_info in nj_ranking.items():
-                nj_product_id = nj_info["product_id"]
+                print(nj_rank, nj_info)
+                nj_model_id = nj_info["product_id"]
                 nj_model = retail_info[nj_product_id]["model"]
 
                 print(nj_rank, nj_product_id, nj_model)
@@ -319,6 +331,7 @@ class Main:
         new_wb = openpyxl.Workbook()
         new_ws = new_wb.active
 
+        # TODO. model, entry, function
         column_names = ["ref_no", "shortage_store_count", "L12M_label", "L12M_sales_sum", "L6M_label", "L6M_sales_sum", "L3M_label", "L3M_sales_sum"]
         new_ws.append(column_names)
 
