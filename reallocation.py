@@ -8,7 +8,7 @@ from common import get_current_time, get_column_number, get_last_data_idx, conve
 
 
 SOURCE_DIR = "C:/Users/jinny.hur/Desktop/업무파일/01. 리얼로케이션" # 마스터 파일 저장 경로
-SOURCE_FILE_NAME = "Retail BTQ reallocation (0207_rank)_JH" # 마스터 파일명(확장자 제외)
+SOURCE_FILE_NAME = "Retail BTQ reallocation (0207_rank)" # 마스터 파일명(확장자 제외)
 
 TARGET_ROTATION = 1.5
 
@@ -122,7 +122,9 @@ class Main:
         # reallocation for store_info
         print("----- STORE_INFO REALLOCATION -----\n")
         for ref_no, retail in retail_info.items():
-            # reallocation과 무관하지만, 업무 필요 사항으로 ranking 추가함
+            # for debugging
+            # if ref_no not in ['CRB4086444', 'CRB4086445']:
+            #     continue
 
             total_available = retail.get("stock_info").get("total_available")
             current_available = total_available # reallocation 위해 재고값 복사
@@ -151,6 +153,8 @@ class Main:
                     print(f'### {NO_6M_SALES}\n- no L6M_sales in all stores\n')
                     retail_info[ref_no]["result"] = NO_6M_SALES
                     break
+
+                # print(store_info_items)
 
                 sorted_dict = OrderedDict(sorted(store_info_items, key=lambda x: x[1].get("rotation", 0) if isinstance(x[1], dict) else 0))
                 rotation_counts = Counter(value.get("rotation", 0) if isinstance(value, dict) and isinstance(value.get("rotation"), (int, float)) else 0 for key, value in sorted_dict.items())
